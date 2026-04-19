@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal & Shape Sound Cards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .search-container {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        input[type="text"] {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            width: 300px;
+            max-width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: transparent;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            text-align: center;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+        
+        .card.playing {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+            transform: scale(1.05);
+        }
+        
+        .card-title {
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: inherit;
+        }
+        
+        .card-type {
+            font-size: 0.75em;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .card.animal .card-type::before {
+            content: "🦁 ";
+        }
+        
+        .card.shape .card-type::before {
+            content: "🔷 ";
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .status-bar.show {
+            display: flex;
+        }
+        
+        .status-icon {
+            font-size: 1.5em;
+            animation: pulse 0.6s infinite;
+        }
+        
+        .status-text {
+            flex: 1;
+            font-size: 0.95em;
+            color: #333;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(-400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .info-text {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        
+        .loading-message {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-top: 20px;
+            font-size: 0.85em;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            input[type="text"] {
+                width: 100%;
+            }
+            
+            .cards-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Animal & Shape Cards</h1>
+        <p class="subtitle">Click any card to hear its sound</p>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search cards...">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="animal">Animals</button>
+                <button class="filter-btn" data-filter="shape">Shapes</button>
+            </div>
+        </div>
+        
+        <div class="cards-grid" id="cardsGrid"></div>
+        
+        <p class="info-text">✅ Click any card to play its sound!</p>
+        <p class="loading-message" id="loadingMsg">Loading audio files...</p>
+    </div>
+    
+    <div class="status-bar" id="statusBar">
+        <span class="status-icon" id="statusIcon">🔊</span>
+        <span class="status-text" id="statusText">Playing...</span>
+    </div>
+
+    <script src="sounds.js"></script>
+    <script>
+        // Card data - references the AUDIO_MAP from sounds.js
+        const cardsData = [
+            { name: 'Train', type: 'shape', soundKey: 'train' },
+            { name: 'Maze', type: 'shape', soundKey: 'maze' },
+            { name: 'Brinjal', type: 'shape', soundKey: 'brinjal' },
+            { name: 'Flower', type: 'shape', soundKey: 'flower' },
+            { name: 'Duck', type: 'animal', soundKey: 'duck' },
+            { name: 'Sunflower', type: 'shape', soundKey: 'sunflower' },
+            { name: 'Bumblebee', type: 'animal', soundKey: 'bumblebee' },
+            { name: 'Ladybug', type: 'animal', soundKey: 'ladybug' },
+            { name: 'Christmas Tree', type: 'shape', soundKey: 'christmas_tree' },
+            { name: 'Fish', type: 'animal', soundKey: 'fish' },
+            { name: 'Foot', type: 'shape', soundKey: 'foot' },
+            { name: 'Pelican', type: 'animal', soundKey: 'pelican' },
+            { name: 'Owl', type: 'animal', soundKey: 'owl' },
+            { name: 'Squirrel', type: 'animal', soundKey: 'squirrel' },
+            { name: 'Camel', type: 'animal', soundKey: 'camel' },
+            { name: 'Fractal Infinite Star', type: 'shape', soundKey: 'fractal_infinite_star' },
+            { name: 'Starfish', type: 'animal', soundKey: 'starfish' },
+            { name: 'Monkey', type: 'animal', soundKey: 'monkey' },
+            { name: 'Triangle Maze', type: 'shape', soundKey: 'triangle_maze' },
+            { name: 'Tulip', type: 'shape', soundKey: 'tulip' },
+            { name: 'Pear', type: 'shape', soundKey: 'pear' },
+            { name: 'Cherry', type: 'shape', soundKey: 'cherry' },
+            { name: 'Giraffe', type: 'animal', soundKey: 'giraffe' },
+            { name: 'Maple Leaf', type: 'shape', soundKey: 'maple_leaf' },
+            { name: 'Car', type: 'shape', soundKey: 'car' },
+            { name: 'Elephant', type: 'animal', soundKey: 'elephant' },
+            { name: 'Ant', type: 'animal', soundKey: 'ant' },
+            { name: 'Apple', type: 'shape', soundKey: 'apple' },
+            { name: 'Circle Target', type: 'shape', soundKey: 'circle_target' },
+            { name: 'Banana', type: 'shape', soundKey: 'banana' },
+            { name: 'Deer', type: 'animal', soundKey: 'deer' },
+            { name: 'Penguin', type: 'animal', soundKey: 'penguin' },
+            { name: 'Windmill', type: 'shape', soundKey: 'windmill' },
+            { name: 'Grapes', type: 'shape', soundKey: 'grapes' }
+        ];
+        
+        let filteredCards = [...cardsData];
+        let currentFilter = 'all';
+        let currentAudio = null;
+        let audioLoaded = false;
+        
+        const grid = document.getElementById('cardsGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const statusBar = document.getElementById('statusBar');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const loadingMsg = document.getElementById('loadingMsg');
+        
+        // Check if audio data loaded
+        window.addEventListener('load', function() {
+            if (typeof AUDIO_MAP !== 'undefined' && Object.keys(AUDIO_MAP).length > 0) {
+                audioLoaded = true;
+                loadingMsg.textContent = '✅ Audio files loaded successfully!';
+                setTimeout(() => loadingMsg.style.display = 'none', 3000);
+            } else {
+                loadingMsg.textContent = '❌ Error: Audio files not loaded. Try refreshing.';
+            }
+        });
+        
+        // Render cards
+        function renderCards() {
+            grid.innerHTML = '';
+            filteredCards.forEach((card) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = `card ${card.type}`;
+                cardEl.innerHTML = `
+                    <div class="card-title">${card.name}</div>
+                    <div class="card-type">${card.type}</div>
+                `;
+                
+                cardEl.addEventListener('click', () => playSound(card, cardEl));
+                
+                grid.appendChild(cardEl);
+            });
+        }
+        
+        // Play sound
+        function playSound(card, cardEl) {
+            // Check if audio is loaded
+            if (!audioLoaded || !AUDIO_MAP || !AUDIO_MAP[card.soundKey]) {
+                statusIcon.textContent = '❌';
+                statusText.textContent = `Audio not loaded yet. Try refreshing the page.`;
+                statusBar.classList.add('show');
+                return;
+            }
+            
+            // Stop current sound if playing
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            
+            // Remove playing class from all cards
+            document.querySelectorAll('.card.playing').forEach(el => {
+                el.classList.remove('playing');
+            });
+            
+            // Add playing class to current card
+            cardEl.classList.add('playing');
+            
+            // Show status
+            statusIcon.textContent = '🔊';
+            statusText.textContent = `Now playing: ${card.name}`;
+            statusBar.classList.add('show');
+            
+            // Create and play audio
+            try {
+                const audioDataUrl = AUDIO_MAP[card.soundKey];
+                currentAudio = new Audio(audioDataUrl);
+                currentAudio.play().catch(err => {
+                    statusIcon.textContent = '❌';
+                    statusText.textContent = `Error: Could not play sound`;
+                    console.error('Audio play error:', err);
+                });
+                
+                currentAudio.addEventListener('ended', () => {
+                    cardEl.classList.remove('playing');
+                    statusBar.classList.remove('show');
+                    currentAudio = null;
+                });
+                
+                currentAudio.addEventListener('error', () => {
+                    statusIcon.textContent = '❌';
+                    statusText.textContent = `Error loading audio`;
+                    console.error('Audio error');
+                });
+            } catch (err) {
+                statusIcon.textContent = '❌';
+                statusText.textContent = `Error: ${err.message}`;
+                console.error('Error:', err);
+            }
+        }
+        
+        // Search functionality
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            applyFilters(query);
+        });
+        
+        // Filter buttons
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                applyFilters();
+            });
+        });
+        
+        // Apply filters
+        function applyFilters(searchQuery = '') {
+            filteredCards = cardsData.filter(card => {
+                const matchesSearch = card.name.toLowerCase().includes(searchQuery);
+                const matchesFilter = currentFilter === 'all' || card.type === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+            renderCards();
+        }
+        
+        // Initialize
+        renderCards();
+    </script>
+</body>
+</html>
